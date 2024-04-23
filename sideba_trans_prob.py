@@ -214,7 +214,7 @@ class parConf: #Parameter configuration
 #Test program below. Delete or play around with it
 generate_GLs=False
 generate_Omluts=False
-export_to_pdf=True
+export_to_pdf=False
 perarr=np.append([0,1/16,1/8,1/4],np.linspace(1/2,2,7))
 
 for fr in [70e3,150e3,250e3,500e3,1000e3,2000e3]:
@@ -234,26 +234,11 @@ for fr in [70e3,150e3,250e3,500e3,1000e3,2000e3]:
                 pdf.savefig()
                 plt.close()
             d = pdf.infodict()
-            d['Author'] = "Niklas S. Truelsen"
+            d['Author'] = "Lazy GitHub user"
             d['Title'] = "Sideband transition probabilities of trapped ions"
 a=parConf(2*np.pi*70e3,2*np.pi*16e3,1762e-9,138,True,3,0.082)
 #a=parConf(2*np.pi*2000e3,2*np.pi*16e3,1762e-9,138,True)
 #a.genLine(300000)
 #a.saveGL()
-a.genOmlut(0,30000)
-print(a.GLlut.shape)
-
-
-
-#myOms=np.ones(30000)
-#for n in range(30000):
-#    myOms[n]=a.Om(n,-1)#26798
-
-#print(a.dPdT_lut(3e-5,0,1/2,True),"\n")
-
-#xs=10**np.linspace(-6,-2,10)
-#for x in xs:
-#    print( a.P_lut(x,1,1/2,True) ,sep=", ")
-
-#for nn in range(5):
-    #print(scsp.eval_genlaguerre(nn,range(4),a.myeta**2))
+#a.genOmlut(0,30000)
+#print(a.GLlut.shape)
