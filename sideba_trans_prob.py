@@ -117,34 +117,29 @@ class parConf: #Parameter configuration
         for n in range(max(0,-s),nsm):
             o+=Pc_lut(n,T,s,t)
         return o/norm
-    def dP_inv4(self,C,a,k=1,mx00=10): #Function for estimation of max n (in sum for dP/dT)
+    def dP_inv4(self,C,a,k=1,mx0=10): #Function for estimation of max n (in sum for dP/dT)
         dP_inv3=lambda y,a,k:-scsp.lambertw(y,k)/a-1
         rt=[]
-        mx0=np.max(np.real(dP_inv3(C,a,0)))
-        if not np.isnan(mx0):
-            mx0=max(mx00,int(mx0))
-        else:
-            mx0=mx00
         myInv=np.real(dP_inv3(-C,a,k))
         if myInv.size<2:
             return myInv if myInv>mx0 else mx0
         for e in myInv:
             rt.append( e if e>mx0 else mx0 )
         return np.array(rt)
-    def dPdT_lut(self,T,s,t,scale_t=False,aC=0.01,nsm=200): #dP/dT look-up-table
-        dPdTc_lut=lambda n,T,s,t:np.exp(-hbar*self.omz*n/(kB*T))*(n-(n+1)*np.exp(-hbar*self.omz/(kB*T)))*np.sin(self.Omlut[n,s+3]*t/2)**2
+    def T_dPdT_lut(self,T,s,t,scale_t=False,aC=0.01,nsm=200): #dP/dT look-up-table
+        T_dPdTc_lut=lambda n,T,s,t:np.exp(-hbar*self.omz*n/(kB*T))*(n-(n+1)*np.exp(-hbar*self.omz/(kB*T)))*np.sin(self.Omlut[n,s+self.sran]*t/2)**2
         o=0
         if(scale_t):
             t*=np.pi/(self.myeta*self.Om0)
-        norm=hbar*self.omz/(kB*T**2)
+        #norm=hbar*self.omz/(kB*T**2)
         alfa=hbar*self.omz/(kB*T)
         nsmr=np.real(  self.dP_inv4(aC,alfa,1,5)  )
         nsm=1
         if not np.isnan(nsmr):
             nsm=int(np.ceil(nsmr))
         for n in range(max(0,-s),nsm):
-            o+=dPdTc_lut(n,T,s,t)*T
-        return o*norm
+            o+=T_dPdTc_lut(n,T,s,t)
+        return o*alfa
     def myLegendAxis(self,imax,txt): #Make custom legend
         tsize=8
         #imax = pf.add_axes([.45,.5,.25,.25])
@@ -187,7 +182,7 @@ class parConf: #Parameter configuration
         for x,lx in zip(xs,logxs):
             one_s=[]
             for mys in mysran:
-                one_s.append(self.dPdT_lut(x,mys,per,True,C_dPdT))
+                one_s.append(self.T_dPdT_lut(x,mys,per,True,C_dPdT))
             mymat.append(one_s)
         mymat=np.array(mymat)
         for mm,sss in zip(np.array(mymat).T,mysran):
@@ -195,9 +190,9 @@ class parConf: #Parameter configuration
             myls=self.getLineSt(sss)
             ax[1].plot(xs,mm,label=sss,c=myc,ls=myls)
         ax[1].hlines(0,1e-6,1e-2,color="#505050",linewidth=.8,label="T$\\cdot$dP/dT = 0")
-        ax[1].set_title("$\\frac{"+str(pratio[0])+"}{"+str(pratio[1])+"}\\pi$-pulse, n=0, P$_{thres}$="+str(C_dPdT)+", "+titlinfo+"\n$\\omega_z=2\\pi\\cdot$"+str(self.omz/(2*np.pi*1e3))+" kHz, $\\Omega_0=2\\pi\\cdot$"+str(self.Om0/(2*np.pi*1e3))+" kHz, $\\lambda=$"+str(self.wavelength*1e9)+" nm")
+        ax[1].set_title("$\\frac{"+str(pratio[0])+"}{"+str(pratio[1])+"}\\pi$-pulse, n=0, $\\mathcal{C}$=-"+str(C_dPdT)+", "+titlinfo+"\n$\\omega_z=2\\pi\\cdot$"+str(self.omz/(2*np.pi*1e3))+" kHz, $\\Omega_0=2\\pi\\cdot$"+str(self.Om0/(2*np.pi*1e3))+" kHz, $\\lambda=$"+str(self.wavelength*1e9)+" nm")
         ax[1].set_ylim([-.35,.35])
-        ax[1].set_ylabel("T$\\cdot$dP$_{transi}$/dT (1)")
+        ax[1].set_ylabel("T$\\cdot$dP/dT (1)")
         
         imax = pf.add_axes([.85,.59,.15,.15])
         self.myLegendAxis(imax,"P=$\\frac{1}{2}$")
@@ -217,11 +212,11 @@ generate_Omluts=False
 export_to_pdf=False
 perarr=np.append([0,1/16,1/8,1/4],np.linspace(1/2,2,7))
 
-for fr in [70e3,150e3,250e3,500e3,1000e3,2000e3]:
+for fr in [70e3,100e3,150e3,250e3,500e3,1000e3,2000e3]:
     a=parConf(2*np.pi*fr,2*np.pi*16e3,1762e-9,138,True)
     if(generate_GLs):
-        a.genLine(300000) #this line takes about 10-15 mins. but can be saved for later
-        a.saveGL()
+        a.genLine(30000) #this line takes a while
+        a.saveGL() #cache results for later
     if(generate_Omluts):
         a.genOmlut(0,30000)
         a.saveOmlut()
